@@ -10,7 +10,8 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from queue import Queue
 from datetime import datetime
-import shutil  # Add this import at the top with other imports
+from selenium.webdriver.chrome.service import Service
+import shutil
 
 app = Flask(__name__)
 app.secret_key = "super_secret_key"   # for flash messages
@@ -39,10 +40,39 @@ def init_driver():
 
         options = webdriver.ChromeOptions()
         # Keep your WhatsApp login between restarts
-        options.add_argument("--user-data-dir=./User_Data")
-        # Optional: run headless on a server
-        # options.add_argument("--headless")
-        driver = webdriver.Chrome(options=options)
+        options.add_argument(f"--user-data-dir={os.path.abspath('./User_Data')}")
+        # Recommended flags that help on servers/desktops alike
+        options.add_argument("--no-sandbox ")
+        options.add_argument("--no-sandbox")
+        options.add_argument("--disable-dev-shm-usage")
+        options.add_argument("--disable-gpu")
+        options.add_argument("--window-size=1920,1080")
+        # Do not force headless here (desktop testing); enable if you need headless
+        # options.add_argument("--headless=new")
+
+        # Try to find Chrome/Chromium binary automatically
+        chrome_bin = os.environ.get("CHROME_BIN") or shutil.which("google-chrome") or shutil.which("chromium") or shutil.which("chromium-browser")
+        if chrome_bin:
+            options.binary_location = chrome_bin
+
+        # Put chromedriver verbose log next to app
+        service = Service(log_path="chromedriver.log")
+
+        try:
+            driver = webdriver.Chrome(service=service, options=options)
+        except Exception as e:
+            log_message(f"init_driver error: {e}")
+            # attach last lines of chromedriver.log to logs for diagnosis
+            try:
+                if os.path.exists("chromedriver.log"):
+                    with open("chromedriver.log", "r") as f:
+                        lines = f.readlines()
+                        for line in lines[-200:]:
+                            log_message(line.rstrip())
+            except Exception:
+                pass
+            raise
+
         driver.get("https://web.whatsapp.com")
         return driver
 
