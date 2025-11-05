@@ -47,22 +47,23 @@ def init_driver():
         options = webdriver.ChromeOptions()
         # Keep your WhatsApp login between restarts
         options.add_argument(f"--user-data-dir={os.path.abspath('./User_Data')}")
-        # Recommended flags that help on servers/desktops alike
-        options.add_argument("--no-sandbox ")
+        # Recommended flags
         options.add_argument("--no-sandbox")
         options.add_argument("--disable-dev-shm-usage")
         options.add_argument("--disable-gpu")
         options.add_argument("--window-size=1920,1080")
-        # Do not force headless here (desktop testing); enable if you need headless
-        # options.add_argument("--headless=new")
+
+        # Enable headless if HEADLESS=1 in env (optional)
+        if os.environ.get("HEADLESS") == "1":
+            options.add_argument("--headless=new")
 
         # Try to find Chrome/Chromium binary automatically
-        chrome_bin = os.environ.get("CHROME_BIN") or shutil.which("google-chrome") or shutil.which("chromium") or shutil.which("chromium-browser")
-        if chrome_bin:
+        chrome_bin = os.environ.get("CHROME_BIN") or shutil.which("google-chrome") or shutil.which("chromium") or shutil.which("chromium-browser") or "/usr/bin/google-chrome"
+        if chrome_bin and os.path.exists(chrome_bin):
             options.binary_location = chrome_bin
 
-        # Put chromedriver verbose log next to app
-        service = Service(log_path="chromedriver.log")
+        # Use webdriver-manager to install and provide chromedriver executable
+        service = Service(ChromeDriverManager().install(), log_path="chromedriver.log")
 
         try:
             driver = webdriver.Chrome(service=service, options=options)
