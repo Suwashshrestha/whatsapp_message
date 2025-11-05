@@ -11,7 +11,13 @@ from selenium.webdriver.support import expected_conditions as EC
 from queue import Queue
 from datetime import datetime
 from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.chrome.options import Options
+from webdriver_manager.chrome import ChromeDriverManager  # Changed import
 import shutil
+
+# Remove the pre-computed cache path section and replace with:
+driver = None
+driver_lock = threading.Lock()
 
 app = Flask(__name__)
 app.secret_key = "super_secret_key"   # for flash messages
@@ -209,4 +215,4 @@ def bulk_send(csv_path: str, message: str):
 if __name__ == "__main__":
     # Create uploads folder if missing
     os.makedirs("uploads", exist_ok=True)
-    app.run(debug=True, port=5000)
+    app.run(debug=True, host='0.0.0.0', port=5222)
